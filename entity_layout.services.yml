@@ -1,0 +1,6 @@
+services:
+  entity_layout.route_subscriber:
+    class: Drupal\entity_layout\Routing\RouteSubscriber
+    arguments: ['@entity.manager']
+    tags:
+      - { name: event_subscriber }

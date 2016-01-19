@@ -1,0 +1,7 @@
+type: module
+name: 'Entity layout'
+description: 'This module allows the layout to be configured for entity content individually by the user.'
+core: 8.x
+package: 'Entity Layout'
+dependencies:
+  - layout_plugin
