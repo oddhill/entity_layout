@@ -1,0 +1,35 @@
+# Page to lists all layouts.
+entity.entity_layout.collection:
+  path: '/admin/structure/entity_layout'
+  defaults:
+    _entity_list: 'entity_layout'
+    _title: 'Entity layout'
+  requirements:
+    _permission: 'administer entity layouts'
+
+# Page to add a layout.
+entity.entity_layout.add_form:
+  path: '/admin/structure/entity_layout/add'
+  defaults:
+    _entity_form: 'entity_layout.add'
+    _title: 'Add entity layout'
+  requirements:
+    _permission: 'administer entity layouts'
+
+# Page to edit a layout.
+entity.entity_layout.edit_form:
+  path: '/admin/structure/entity_layout/{entity_layout}'
+  defaults:
+    _entity_form: 'entity_layout.edit'
+    _title: 'Edit entity layout'
+  requirements:
+    _permission: 'administer entity layouts'
+
+# Page to remove a layout.
+entity.entity_layout.delete_form:
+  path: '/admin/structure/entity_layout/{entity_layout}/delete'
+  defaults:
+    _entity_form: 'entity_layout.delete'
+    _title: 'Delete entity layout'
+  requirements:
+    _permission: 'administer entity layouts'

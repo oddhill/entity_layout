@@ -1,6 +1,17 @@
 services:
+  entity_layout.manager:
+    class: Drupal\entity_layout\EntityLayoutManager
+    arguments: ['@entity.manager']
+  entity_layout.service:
+    class: Drupal\entity_layout\EntityLayoutService
+    arguments: ['@plugin.manager.block', '@context.repository', '@entity.manager']
   entity_layout.route_subscriber:
     class: Drupal\entity_layout\Routing\RouteSubscriber
     arguments: ['@entity.manager']
     tags:
       - { name: event_subscriber }
+  entity_layout.route_enhancer:
+    class: Drupal\entity_layout\Routing\EntityLayoutRouteEnhancer
+    arguments: ['@entity.manager']
+    tags:
+      - { name: route_enhancer }

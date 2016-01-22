@@ -1,0 +1,5 @@
+entity.entity_layout.collection:
+  title: 'Entity layout'
+  parent: system.admin_structure
+  description: 'Customize the layout for content entities and bundles.'
+  route_name: entity.entity_layout.collection

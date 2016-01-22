@@ -1,0 +1,3 @@
+entity_layout.layout:
+  class: \Drupal\Core\Menu\LocalTaskDefault
+  deriver: \Drupal\entity_layout\Plugin\Derivative\EntityLayoutLocalTask
