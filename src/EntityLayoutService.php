@@ -2,7 +2,6 @@
 
 namespace Drupal\entity_layout;
 
-use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Core\Block\BlockManagerInterface;
 use Drupal\Core\Block\BlockPluginInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
@@ -36,11 +35,11 @@ class EntityLayoutService {
   protected $contextRepository;
 
   /**
-   * The Drupal UUID generator service.
+   * The entity layout manager.
    *
-   * @var UuidInterface
+   * @var EntityLayoutManager
    */
-  protected $uuid;
+  protected $entityLayoutManager;
 
   /**
    * EntityLayoutService constructor.
@@ -48,18 +47,18 @@ class EntityLayoutService {
    * @param BlockManagerInterface $blockManager
    * @param ContextRepositoryInterface $contextRepository
    * @param EntityTypeManagerInterface $entityTypeManager
-   * @param UuidInterface $uuid
+   * @param EntityLayoutManager $entityLayoutManager
    */
   public function __construct(
     BlockManagerInterface $blockManager,
     ContextRepositoryInterface $contextRepository,
     EntityTypeManagerInterface $entityTypeManager,
-    UuidInterface $uuid
+    EntityLayoutManager $entityLayoutManager
   ) {
     $this->entityTypeManager = $entityTypeManager;
     $this->blockManager = $blockManager;
     $this->contextRepository = $contextRepository;
-    $this->uuid = $uuid;
+    $this->entityLayoutManager = $entityLayoutManager;
   }
 
   /**
@@ -223,7 +222,7 @@ class EntityLayoutService {
 
     // Create a entity layout block entity from each default block
     // configuration and create a new UUID.
-    foreach ($entity_layout->getBlocks() as $block) {
+    foreach ($entity_layout->getDefaultBlocks() as $block) {
       $configuration = $block->getConfiguration();
 
       $block_entity = EntityLayoutBlock::create([
@@ -303,6 +302,11 @@ class EntityLayoutService {
     catch (EntityStorageException $e) {
       return FALSE;
     }
+
+    $entity_layout = $this->entityLayoutManager
+      ->getEntityLayout($entity->getEntityTypeId(), $entity->bundle());
+
+    $this->transferDefaultBlocks($entity_layout, $entity);
 
     return TRUE;
   }

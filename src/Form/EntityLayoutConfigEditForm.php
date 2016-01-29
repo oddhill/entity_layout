@@ -73,7 +73,7 @@ class EntityLayoutConfigEditForm extends EntityLayoutFormBase {
       ],
     ];
 
-    $blocks = $this->entity->getBlocks();
+    $blocks = $this->entity->getDefaultBlocks();
 
     // Weights range from -delta to +delta, so delta should be at least half
     // of the amount of blocks present. This makes sure all blocks in the same
@@ -85,25 +85,13 @@ class EntityLayoutConfigEditForm extends EntityLayoutFormBase {
       $form['layout'][$block_id] = $this->buildBlockRow($block, $weight_delta, $target_entity_type, $bundle_entity_type, $target_bundle);
     }
 
-    $form['settings'] = array(
-      '#type' => 'details',
-      '#title' => $this->t('Settings'),
-      '#tree' => TRUE,
-    );
-
-    $form['settings']['allow_custom_blocks'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Allow all custom blocks'),
-      '#description' => $this->t('Checking this will allow any custom block content to be placed regardless of if the block has been allowed or not.'),
-    ];
-
     $form['allowed_blocks'] = array(
       '#type' => 'details',
       '#title' => $this->t('Allowed blocks'),
       '#tree' => TRUE,
     );
 
-    foreach ($this->entityLayoutService->getBlocks() as $block_id => $block) {
+    foreach ($this->entityLayoutService->getSystemBlocks() as $block_id => $block) {
       $form['allowed_blocks'][$block_id] = [
         '#type' => 'checkbox',
         '#title' => $block['admin_label'],
@@ -200,6 +188,20 @@ class EntityLayoutConfigEditForm extends EntityLayoutFormBase {
         'edit' => [
           'title' => $this->t('Edit'),
           'url' => Url::fromRoute("entity_layout.{$target_entity_type}.block.edit", [
+            'block_id' => $configuration['uuid'],
+            $bundle_entity_type => $target_bundle,
+          ]),
+          'attributes' => [
+            'class' => ['use-ajax'],
+            'data-dialog-type' => 'modal',
+            'data-dialog-options' => Json::encode([
+              'width' => 700,
+            ]),
+          ],
+        ],
+        'remove' => [
+          'title' => $this->t('Remove'),
+          'url' => Url::fromRoute("entity_layout.{$target_entity_type}.block.remove", [
             'block_id' => $configuration['uuid'],
             $bundle_entity_type => $target_bundle,
           ]),

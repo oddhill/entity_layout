@@ -132,7 +132,7 @@ class RouteSubscriber extends RouteSubscriberBase {
       $collection->add("entity_layout.{$entity_type_id}.content.reset", new Route(
         "{$entity_canonical_path}/layout/reset",
         [
-          '_entity_form' => 'entity_layout.reset-layout',
+          '_form' => '\\Drupal\\entity_layout\\Form\\Content\\ResetLayoutForm',
           '_title' => 'Reset layout',
         ] + $defaults,
         $requirements,
@@ -154,7 +154,7 @@ class RouteSubscriber extends RouteSubscriberBase {
       $collection->add("entity_layout.{$entity_type_id}.content.block.add", new Route(
         "{$entity_canonical_path}/layout/block/add/{block_id}",
         [
-          '_form' => '\\Drupal\\entity_layout\\Form\\ContentBlockAddForm',
+          '_form' => '\\Drupal\\entity_layout\\Form\\Content\\BlockAddForm',
           '_title' => 'Add block',
         ] + $defaults,
         $requirements,
@@ -165,7 +165,7 @@ class RouteSubscriber extends RouteSubscriberBase {
       $collection->add("entity_layout.{$entity_type_id}.content.block.edit", new Route(
         "{$entity_canonical_path}/layout/block/edit/{block_id}",
         [
-          '_form' => '\\Drupal\\entity_layout\\Form\\ContentBlockEditForm',
+          '_form' => '\\Drupal\\entity_layout\\Form\\Content\\BlockEditForm',
           '_title' => 'Edit block',
         ] + $defaults,
         $requirements,
@@ -176,7 +176,7 @@ class RouteSubscriber extends RouteSubscriberBase {
       $collection->add("entity_layout.{$entity_type_id}.content.block.remove", new Route(
         "{$entity_canonical_path}/layout/block/remove/{block_id}",
         [
-          '_form' => '\\Drupal\\entity_layout\\Form\\ContentBlockDeleteForm',
+          '_form' => '\\Drupal\\entity_layout\\Form\\Content\\BlockDeleteForm',
           '_title' => 'Remove block',
         ] + $defaults,
         $requirements,
@@ -256,7 +256,7 @@ class RouteSubscriber extends RouteSubscriberBase {
       $collection->add("entity_layout.$entity_type_id.block.add", new Route(
         "{$path}/layout/block/add/{block_id}",
         [
-          '_form' => '\\Drupal\\entity_layout\\Form\\ConfigBlockAddForm',
+          '_form' => '\\Drupal\\entity_layout\\Form\\Config\\BlockAddForm',
           '_title' => 'Add block',
         ] + $defaults,
         $requirements,
@@ -267,8 +267,19 @@ class RouteSubscriber extends RouteSubscriberBase {
       $collection->add("entity_layout.$entity_type_id.block.edit", new Route(
         "{$path}/layout/block/edit/{block_id}",
         [
-          '_form' => '\\Drupal\\entity_layout\\Form\\ConfigBlockEditForm',
+          '_form' => '\\Drupal\\entity_layout\\Form\\Config\\BlockEditForm',
           '_title' => 'Edit block',
+        ] + $defaults,
+        $requirements,
+        $options
+      ));
+
+      // Config block remove route.
+      $collection->add("entity_layout.$entity_type_id.block.remove", new Route(
+        "{$path}/layout/block/remove/{block_id}",
+        [
+          '_form' => '\\Drupal\\entity_layout\\Form\\Config\\BlockDeleteForm',
+          '_title' => 'Remove block',
         ] + $defaults,
         $requirements,
         $options

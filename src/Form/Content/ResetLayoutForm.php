@@ -1,30 +1,31 @@
 <?php
 
-namespace Drupal\entity_layout\Form;
+namespace Drupal\entity_layout\Form\Content;
 
 use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\Core\Entity\EntityConfirmFormBase;
+use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
 use Drupal\entity_layout\EntityLayoutInterface;
 use Drupal\entity_layout\EntityLayoutManager;
 use Drupal\entity_layout\EntityLayoutService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-class ResetLayoutForm extends EntityConfirmFormBase
+class ResetLayoutForm extends ConfirmFormBase
 {
   /**
-   * The current content entity object if one has been loaded.
+   * The content entity.
    *
    * @var ContentEntityInterface
    */
-  protected $contentEntity;
+  private $contentEntity;
 
   /**
+   * The entity layout.
+   *
    * @var EntityLayoutInterface
    */
-  protected $entity;
+  private $entityLayout;
 
   /**
    * The entity layout manager class.
@@ -66,37 +67,6 @@ class ResetLayoutForm extends EntityConfirmFormBase
   /**
    * {@inheritdoc}
    */
-  protected function getEntityLayout($entity_type_id, $bundle) {
-    return $this->entityLayoutManager->getEntityLayout($entity_type_id, $bundle);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getEntityFromRouteMatch(RouteMatchInterface $route_match, $entity_type_id) {
-    $parameters = $route_match->getParameters()->all();
-
-    $entity_type_id = $parameters['entity_type_id'];
-    $bundle = $parameters['bundle'];
-
-    // If the page being loaded is for a content entity then we need to use
-    // the bundle from the content entity instead as the bundle name since
-    // the one supplied in the route parameters is the key for where the
-    // bundle is stored in the database only.
-    if (isset($parameters[$entity_type_id]) && $parameters[$entity_type_id] instanceof ContentEntityInterface) {
-      /** @var ContentEntityInterface $content_entity */
-      $content_entity = $parameters[$entity_type_id];
-      $bundle = $content_entity->bundle();
-
-      $this->contentEntity = $content_entity;
-    }
-
-    return $this->getEntityLayout($entity_type_id, $bundle);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getFormId() {
     return 'entity_layout_reset_layout_form';
   }
@@ -121,14 +91,16 @@ class ResetLayoutForm extends EntityConfirmFormBase
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $content_entity = $this->getContentEntityFromRouteMatch();
+
     if ($this->entityLayoutService->resetContentEntityLayout($this->contentEntity)) {
       drupal_set_message($this->t('The layout for @label has been reset.', [
-        '@label' => $this->contentEntity->label(),
+        '@label' => $content_entity->label(),
       ]));
     }
     else {
       drupal_set_message($this->t('The layout for @label could not be reset. Please try again.', [
-        '@label' => $this->contentEntity->label(),
+        '@label' => $content_entity->label(),
       ]), 'warning');
     }
 
@@ -138,11 +110,19 @@ class ResetLayoutForm extends EntityConfirmFormBase
   /**
    * {@inheritdoc}
    */
+  public function getDescription() {
+    return $this->t('Resetting the layout will restore it to it\'s original state that it was in after it was first initialized. Once performed this action cannot be undone.');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getCancelUrl() {
-    $entity_type_id = $this->contentEntity->getEntityTypeId();
+    $content_entity = $this->getContentEntityFromRouteMatch();
+    $entity_type_id = $content_entity->getEntityTypeId();
 
     return Url::fromRoute("entity_layout.{$entity_type_id}.content.layout", [
-      $entity_type_id => $this->contentEntity->id(),
+      $entity_type_id => $content_entity->id(),
     ]);
   }
 
@@ -150,8 +130,44 @@ class ResetLayoutForm extends EntityConfirmFormBase
    * {@inheritdoc}
    */
   public function getQuestion() {
+    $content_entity = $this->getContentEntityFromRouteMatch();
+
     return $this->t('Are you sure you want to reset the layout for @label?', [
-      '@label' => $this->contentEntity->label(),
+      '@label' => $content_entity->label(),
     ]);
+  }
+
+  /**
+   * Get the entity layout from the route match parameters.
+   *
+   * @return EntityLayoutInterface
+   */
+  public function getEntityLayoutFromRouteMatch() {
+    if (!$this->entityLayout) {
+      $content_entity = $this->getContentEntityFromRouteMatch();
+
+      $this->entityLayout = $this->entityLayoutManager
+        ->getEntityLayout($content_entity->getEntityTypeId(), $content_entity->bundle());
+    }
+
+    return $this->entityLayout;
+  }
+
+  /**
+   * Attempt to get a content entity from the route match.
+   *
+   * @return ContentEntityInterface
+   */
+  protected function getContentEntityFromRouteMatch() {
+    if (!$this->contentEntity) {
+      $parameters = $this->getRouteMatch()->getParameters();
+      $entity_type_id = $parameters->get('entity_type_id');
+
+      if ($entity_type_id && $parameters->has($entity_type_id)) {
+        $this->contentEntity = $parameters->get($entity_type_id);
+      }
+    }
+
+    return $this->contentEntity;
   }
 }

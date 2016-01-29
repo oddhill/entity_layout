@@ -4,7 +4,6 @@ namespace Drupal\entity_layout\Form;
 
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\Block\BlockPluginInterface;
-use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
@@ -16,7 +15,7 @@ use Drupal\entity_layout\EntityLayoutManager;
 use Drupal\entity_layout\EntityLayoutService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-abstract class BlockFormBase extends FormBase {
+abstract class BaseBlockFormBase extends FormBase {
 
   /**
    * The Drupal block manager.
@@ -48,13 +47,6 @@ abstract class BlockFormBase extends FormBase {
    * @var EntityLayoutInterface
    */
   protected $entityLayout;
-
-  /**
-   * A content entity if it exists.
-   *
-   * @var ContentEntityInterface
-   */
-  protected $contentEntity;
 
   /**
    * The block plugin instance.
@@ -141,7 +133,6 @@ abstract class BlockFormBase extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, $block_id = NULL) {
     $this->entityLayout = $this->getEntityLayoutFromRouteMatch();
-    $this->contentEntity = $this->getContentEntityFromRouteMath();
     $this->block = $this->prepareBlock($block_id);
 
     // Some blocks require contexts, set a temporary value with gathered
@@ -197,21 +188,5 @@ abstract class BlockFormBase extends FormBase {
    */
   protected function getEntityLayoutFromRouteMatch() {
     return $this->entityLayoutManager->getFromRouteMatch($this->getRouteMatch());
-  }
-
-  /**
-   * Attempt to get a content entity from the route match.
-   *
-   * @return ContentEntityInterface|null
-   */
-  protected function getContentEntityFromRouteMath() {
-    $parameters = $this->getRouteMatch()->getParameters();
-    $entity_type_id = $parameters->get('entity_type_id');
-
-    if ($entity_type_id && $parameters->has($entity_type_id)) {
-      return $parameters->get($entity_type_id);
-    }
-
-    return NULL;
   }
 }

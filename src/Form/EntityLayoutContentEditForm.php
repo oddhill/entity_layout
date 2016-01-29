@@ -10,44 +10,36 @@ use Drupal\Core\Url;
 class EntityLayoutContentEditForm extends EntityLayoutFormBase
 {
   /**
-   *
-   */
-  protected $initialized = TRUE;
-
-  /**
    * {@inheritdoc}
    */
   protected function getEntityLayout($entity_type_id, $bundle) {
     return $this->entityLayoutManager->getEntityLayout($entity_type_id, $bundle);
   }
 
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function form(array $form, FormStateInterface $form_state) {
+    $form_state->set('initialized', FALSE);
+
     // @todo Remove this when tab logic has been implemented.
     if ($this->entity->isNew()) {
       drupal_set_message($this->t('A default layout must be configured for this content to be able to edit the layout.'), 'warning');
       return $form;
     }
 
-    if (!$this->entityLayoutService->hasContentBlocks($this->entity, $this->contentEntity)) {
-      $this->initialized = FALSE;
-
-      drupal_set_message($this->t('This layout must be initialized before you can customize it.'), 'warning');
-
-      $form['actions'] = $this->actions($form, $form_state);
-
-      return $form;
+    // If the entity layout and content entity combination has content blocks
+    // then consider this layout as initialized.
+    if ($this->entityLayoutService->hasContentBlocks($this->entity, $this->contentEntity)) {
+      $form_state->set('initialized', TRUE);
     }
 
-    $this->initialized = TRUE;
-
-    return parent::buildForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function form(array $form, FormStateInterface $form_state) {
     $form = parent::form($form, $form_state);
+
+    // Do not render the full form if the layout has not been initialized.
+    if ($form_state->get('initialized') === FALSE) {
+      return $form;
+    }
 
     $target_entity_type = $this->entity->getTargetEntityType();
     $target_bundle = $this->entity->getTargetBundle();
@@ -106,8 +98,34 @@ class EntityLayoutContentEditForm extends EntityLayoutFormBase
     return $form;
   }
 
+  /**
+   * {@onheritdoc}
+   */
+  public function afterBuild(array $element, FormStateInterface $form_state) {
+    $element = parent::afterBuild($element, $form_state);
+
+    // If the layout has not been initialized and there is no triggering
+    // element then show a message regarding initializing.
+    if ($form_state->get('initialized') === FALSE && !$form_state->getTriggeringElement()) {
+      drupal_set_message($this->t('This layout must be initialized before you can customize it.'), 'warning');
+    }
+
+    return $element;
+  }
+
+
+  /**
+   *
+   *
+   * @param array $form
+   * @param FormStateInterface $form_state
+   */
   public function initializeLayout(array $form, FormStateInterface $form_state) {
     $this->entityLayoutService->transferDefaultBlocks($this->entity, $this->contentEntity);
+
+    $form_state->set('initialized', TRUE);
+
+    drupal_set_message($this->t('The layout has been initialized.'));
   }
 
   /**
@@ -116,12 +134,15 @@ class EntityLayoutContentEditForm extends EntityLayoutFormBase
   protected function actions(array $form, FormStateInterface $form_state) {
     $entity_type_id = $this->contentEntity->getEntityTypeId();
 
-    if (!$this->initialized) {
+    // If the form state has not been initialized then show just an
+    // initialize button.
+    if ($form_state->get('initialized') === FALSE) {
       return [
         'initialize' => [
           '#type' => 'submit',
           '#value' => $this->t('Initialize'),
           '#submit' => ['::initializeLayout'],
+          '#name' => 'initialize-button',
         ],
       ];
     }

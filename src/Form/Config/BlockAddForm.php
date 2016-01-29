@@ -1,11 +1,11 @@
 <?php
 
-namespace Drupal\entity_layout\Form;
+namespace Drupal\entity_layout\Form\Config;
 
 use Drupal\Core\Block\BlockPluginInterface;
 use Drupal\Core\Url;
 
-class ConfigBlockEditForm extends BlockFormBase {
+class BlockAddForm extends BlockFormBase {
 
   /**
    * Returns a unique string identifying the form.
@@ -14,7 +14,7 @@ class ConfigBlockEditForm extends BlockFormBase {
    *   The unique string identifying the form.
    */
   public function getFormId() {
-    return 'entity_layout_config_block_edit_form';
+    return 'entity_layout_config_block_add_form';
   }
 
   /**
@@ -29,7 +29,7 @@ class ConfigBlockEditForm extends BlockFormBase {
     $bundle_entity_type = $this->entityLayoutService
       ->getTargetBundleEntityType($this->entityLayout);
 
-    return Url::fromRoute("entity_layout.{$target_entity_type}.layout", [
+    return Url::fromRoute("entity_layout.{$target_entity_type}.config.layout", [
       $bundle_entity_type => $this->entityLayout->getTargetBundle(),
     ]);
   }
@@ -44,7 +44,7 @@ class ConfigBlockEditForm extends BlockFormBase {
    *   The block plugin.
    */
   protected function prepareBlock($block_id) {
-    return $this->entityLayout->getBlock($block_id);
+    return $this->blockManager->createInstance($block_id);
   }
 
   /**

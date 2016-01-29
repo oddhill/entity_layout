@@ -19,7 +19,6 @@ use Drupal\entity_layout\EntityLayoutInterface;
  *     "form" = {
  *       "config-edit" = "Drupal\entity_layout\Form\EntityLayoutConfigEditForm",
  *       "content-edit" = "Drupal\entity_layout\Form\EntityLayoutContentEditForm",
- *       "reset-layout" = "Drupal\entity_layout\Form\ResetLayoutForm",
  *     }
  *   },
  *   config_prefix = "layout",
