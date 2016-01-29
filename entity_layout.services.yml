@@ -4,10 +4,10 @@ services:
     arguments: ['@entity.manager']
   entity_layout.service:
     class: Drupal\entity_layout\EntityLayoutService
-    arguments: ['@plugin.manager.block', '@context.repository', '@entity.manager']
+    arguments: ['@plugin.manager.block', '@context.repository', '@entity.manager', '@uuid']
   entity_layout.route_subscriber:
     class: Drupal\entity_layout\Routing\RouteSubscriber
-    arguments: ['@entity.manager']
+    arguments: ['@entity.manager', '@entity_layout.manager']
     tags:
       - { name: event_subscriber }
   entity_layout.route_enhancer:

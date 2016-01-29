@@ -2,12 +2,16 @@
 
 namespace Drupal\entity_layout;
 
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\entity_layout\Entity\EntityLayoutBlock;
 
 class EntityLayoutManager {
 
   /**
+   * The Drupal entity type manager.
+   *
    * @var EntityTypeManagerInterface
    */
   private $entityTypeManager;
@@ -16,9 +20,19 @@ class EntityLayoutManager {
    * EntityLayoutManager constructor.
    *
    * @param EntityTypeManagerInterface $entityTypeManager
+   *   The Drupal entity type manager.
    */
   public function __construct(EntityTypeManagerInterface $entityTypeManager) {
     $this->entityTypeManager = $entityTypeManager;
+  }
+
+  /**
+   * Get all entity layouts.
+   *
+   * @return EntityLayoutInterface|[]
+   */
+  public function getAll() {
+    return $this->getEntityLayoutStorage()->loadMultiple();
   }
 
   /**
@@ -65,7 +79,51 @@ class EntityLayoutManager {
       return NULL;
     }
 
-    return $this->getEntityLayout($parameters['entity_type_id'], $parameters['bundle']);
+    $entity_type_id = $parameters['entity_type_id'];
+    $bundle = $parameters['bundle'];
+
+    // If the page being loaded is for a content entity then we need to use
+    // the bundle from the content entity instead as the bundle name since
+    // the one supplied in the route parameters is the key for where the
+    // bundle is stored in the database only.
+    if (isset($parameters[$entity_type_id]) && $parameters[$entity_type_id] instanceof ContentEntityInterface) {
+      /** @var ContentEntityInterface $content_entity */
+      $content_entity = $parameters[$entity_type_id];
+      $bundle = $content_entity->bundle();
+    }
+
+    return $this->getEntityLayout($entity_type_id, $bundle);
+  }
+
+  /**
+   * Create a new entity layout block.
+   *
+   * @param EntityLayoutInterface $entity_layout
+   *   The entity layout object to create a block for.
+   * @param ContentEntityInterface $content_entity
+   *   The content entity to associate the block with.
+   * @param array $configuration
+   *   The block configuration.
+   *
+   * @return EntityLayoutBlockInterface|static
+   */
+  public function createContentBlock(EntityLayoutInterface $entity_layout, ContentEntityInterface $content_entity, array $configuration) {
+    $entity_layout_block = EntityLayoutBlock::create([
+      'layout' => $entity_layout->id(),
+      'config' => $configuration,
+      'entity_id' => $content_entity,
+      'entity_type' => $content_entity->getEntityTypeId(),
+    ]);
+    return $entity_layout_block;
+  }
+
+  /**
+   * Remove the supplied block content.
+   *
+   * @param EntityLayoutBlockInterface $block
+   */
+  public function removeContentBlock(EntityLayoutBlockInterface $entityLayoutBlock) {
+    return $entityLayoutBlock->delete();
   }
 
   /**

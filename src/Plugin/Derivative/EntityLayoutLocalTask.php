@@ -64,20 +64,36 @@ class EntityLayoutLocalTask extends DeriverBase implements ContainerDeriverInter
     );
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getDerivativeDefinitions($base_plugin_definition) {
     $this->derivatives = [];
 
     foreach ($this->entityTypeManager->getDefinitions() as $entity_type_id => $entity_type) {
+      // If the field ui base route property is not set then we won't know
+      // where to attach the manage layout page so skip this entity type.
       if (!$route_name = $entity_type->get('field_ui_base_route')) {
         continue;
       }
 
-      $this->derivatives["entity_layout_{$entity_type_id}"] = [
-        'route_name' => "entity_layout.$entity_type_id.layout",
+      // Add a local task for the manage layout page (config).
+      $this->derivatives["entity_layout_{$entity_type_id}_config"] = [
         'title' => $this->t('Manage layout'),
+        'route_name' => "entity_layout.{$entity_type_id}.layout",
         'base_route' => $route_name,
         'weight' => 4,
       ] + $base_plugin_definition;
+
+      // Add a local task for the layout page (content).
+      if ($entity_type->hasLinkTemplate('canonical')) {
+        $this->derivatives["entity_layout_{$entity_type_id}_content"] = [
+          'title' => $this->t('Layout'),
+          'route_name' => "entity_layout.{$entity_type_id}.content.layout",
+          'base_route' => "entity.{$entity_type_id}.canonical",
+          'weight' => 4,
+        ] + $base_plugin_definition;
+      }
     }
 
     return $this->derivatives;

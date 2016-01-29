@@ -2,9 +2,9 @@
 
 namespace Drupal\entity_layout\Form;
 
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\entity_layout\Entity\EntityLayout;
 use Drupal\entity_layout\EntityLayoutInterface;
 use Drupal\entity_layout\EntityLayoutManager;
 use Drupal\entity_layout\EntityLayoutService;
@@ -13,9 +13,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 abstract class EntityLayoutFormBase extends EntityForm {
 
   /**
-   * @var EntityLayout
+   * The current content entity object if one has been loaded.
    *
-   * @todo Switch to interface when done.
+   * @var ContentEntityInterface
+   */
+  protected $contentEntity;
+
+  /**
+   * @var EntityLayoutInterface
    */
   protected $entity;
 
@@ -73,6 +78,14 @@ abstract class EntityLayoutFormBase extends EntityForm {
    */
   public function getEntityFromRouteMatch(RouteMatchInterface $route_match, $entity_type_id) {
     $parameters = $route_match->getParameters()->all();
-    return $this->getEntityLayout($parameters['entity_type_id'], $parameters['bundle']);
+
+    $entity_type_id = $parameters['entity_type_id'];
+
+    // Attempt to load the content entity.
+    if (isset($parameters[$entity_type_id]) && $parameters[$entity_type_id] instanceof ContentEntityInterface) {
+      $this->contentEntity = $parameters[$entity_type_id];
+    }
+
+    return $this->entityLayoutManager->getFromRouteMatch($route_match);
   }
 }

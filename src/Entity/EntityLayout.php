@@ -2,9 +2,9 @@
 
 namespace Drupal\entity_layout\Entity;
 
-use Drupal\context\Reaction\Blocks\BlockCollection;
 use Drupal\Core\Block\BlockPluginInterface;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\entity_layout\Collection\BlockPluginCollection;
 use Drupal\entity_layout\EntityLayoutInterface;
 
 /**
@@ -14,10 +14,17 @@ use Drupal\entity_layout\EntityLayoutInterface;
  *   id = "entity_layout",
  *   label = @Translation("Entity layout"),
  *   handlers = {
+ *     "access" = "Drupal\entity_layout\EntityLayoutAccess",
+ *     "view_builder" = "Drupal\entity_layout\EntityLayoutViewBuilder",
  *     "form" = {
- *       "edit" = "Drupal\entity_layout\Form\EntityLayoutEditForm",
+ *       "config-edit" = "Drupal\entity_layout\Form\EntityLayoutConfigEditForm",
+ *       "content-edit" = "Drupal\entity_layout\Form\EntityLayoutContentEditForm",
+ *       "reset-layout" = "Drupal\entity_layout\Form\ResetLayoutForm",
  *     }
  *   },
+ *   config_prefix = "layout",
+ *   admin_permission = "administer entity layouts",
+ *   bundle_of = "entity_layout_block",
  *   entity_keys = {
  *     "id" = "name",
  *     "label" = "label",
@@ -155,14 +162,27 @@ class EntityLayout extends ConfigEntityBase implements EntityLayoutInterface {
   }
 
   /**
-   * Get all blocks as a collection.
+   * Get all default blocks as a collection.
    *
-   * @return BlockPluginInterface[]|BlockCollection
+   * @return BlockPluginCollection
+   *
+   * @todo Remove this code and replace any existing calls with the new one.
+   *
+   * @deprecated Will remove. Use get default blocks instead.
    */
   public function getBlocks() {
+    return $this->getDefaultBlocks();
+  }
+
+  /**
+   * Get all default blocks as a collection.
+   *
+   * @return BlockPluginCollection
+   */
+  public function getDefaultBlocks() {
     if (!$this->blocks_collection) {
       $blockManager = \Drupal::service('plugin.manager.block');
-      $this->blocks_collection = new BlockCollection($blockManager, $this->default_blocks);
+      $this->blocks_collection = new BlockPluginCollection($blockManager, $this->default_blocks);
     }
     return $this->blocks_collection;
   }
@@ -185,8 +205,13 @@ class EntityLayout extends ConfigEntityBase implements EntityLayoutInterface {
    * @param array $configuration
    */
   public function addBlock(array $configuration) {
-    $configuration['uuid'] = $this->uuidGenerator()->generate();
-    $this->getBlocks()->addInstanceId($configuration['uuid'], $configuration);
+
+    if (isset($configuration['uuid'])) {
+      $this->updateBlock($configuration['uuid'], $configuration);
+    } else {
+      $configuration['uuid'] = $this->uuidGenerator()->generate();
+      $this->getBlocks()->addInstanceId($configuration['uuid'], $configuration);
+    }
 
     return $configuration['uuid'];
   }

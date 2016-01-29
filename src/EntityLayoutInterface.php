@@ -2,10 +2,10 @@
 
 namespace Drupal\entity_layout;
 
-use Drupal\context\Reaction\Blocks\BlockCollection;
 use Drupal\Core\Block\BlockPluginInterface;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
+use Drupal\entity_layout\Collection\BlockPluginCollection;
 
 interface EntityLayoutInterface extends ConfigEntityInterface, EntityWithPluginCollectionInterface {
 
@@ -52,11 +52,22 @@ interface EntityLayoutInterface extends ConfigEntityInterface, EntityWithPluginC
   public function blockIsAllowed($block_id);
 
   /**
-   * Get all blocks as a collection.
+   * Get all default blocks as a collection.
    *
-   * @return BlockPluginInterface[]|BlockCollection
+   * @return BlockPluginCollection
+   *
+   * @todo Remove this code and replace any existing calls with the new one.
+   *
+   * @deprecated Will remove. Use get default blocks instead.
    */
   public function getBlocks();
+
+  /**
+   * Get all default blocks as a collection.
+   *
+   * @return BlockPluginCollection
+   */
+  public function getDefaultBlocks();
 
   /**
    * Get a block by id.

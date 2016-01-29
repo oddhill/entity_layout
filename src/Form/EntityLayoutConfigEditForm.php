@@ -7,7 +7,7 @@ use Drupal\Core\Block\BlockPluginInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 
-class EntityLayoutEditForm extends EntityLayoutFormBase {
+class EntityLayoutConfigEditForm extends EntityLayoutFormBase {
 
   /**
    * {@inheritdoc}
@@ -20,7 +20,7 @@ class EntityLayoutEditForm extends EntityLayoutFormBase {
    * {@inheritdoc}
    */
   public function form(array $form, FormStateInterface $form_state) {
-    parent::form($form, $form_state);
+    $form = parent::form($form, $form_state);
 
     if ($this->entity->isNew()) {
       drupal_set_message($this->t('A layout has not yet been configured for this entity. To enable the entity layout for this entity you must configure the settings and default blocks for this entity layout.'), 'warning');
@@ -39,7 +39,7 @@ class EntityLayoutEditForm extends EntityLayoutFormBase {
     $form['add_block_button'] = array(
       '#type' => 'link',
       '#title' => $this->t('Place block'),
-      '#url' => Url::fromRoute("entity_layout.{$target_entity_type}.block_library", [
+      '#url' => Url::fromRoute("entity_layout.{$target_entity_type}.block.library", [
         $bundle_entity_type => $target_bundle,
       ]),
       '#attributes' => [
@@ -55,13 +55,14 @@ class EntityLayoutEditForm extends EntityLayoutFormBase {
       '#type' => 'table',
       '#header' => [
         $this->t('Block'),
+        $this->t('Category'),
         $this->t('Weight'),
-        $this->t('Actions')
+        $this->t('Actions'),
       ],
       '#empty' => $this->t('No block have been placed for this entity layout.'),
       '#attributes' => [
-        'class' => ['field-ui-overview'],
-        'id' => 'field-display-overview',
+        'class' => ['entity-layout-overview'],
+        'id' => 'entity-layout-overview',
       ],
       '#tabledrag' => [
         [
@@ -81,7 +82,7 @@ class EntityLayoutEditForm extends EntityLayoutFormBase {
 
     // Block rows.
     foreach ($blocks as $block_id => $block) {
-      $form['layout'][$block_id] = $this->buildBlockRow($block, $weight_delta);
+      $form['layout'][$block_id] = $this->buildBlockRow($block, $weight_delta, $target_entity_type, $bundle_entity_type, $target_bundle);
     }
 
     $form['settings'] = array(
@@ -111,13 +112,12 @@ class EntityLayoutEditForm extends EntityLayoutFormBase {
     }
 
     $form['actions'] = array(
-      '#type' => 'actions'
-    );
-
-    $form['actions']['submit'] = array(
-      '#type' => 'submit',
-      '#button_type' => 'primary',
-      '#value' => $this->t('Save'),
+      '#type' => 'actions',
+      'submit' => [
+        '#type' => 'submit',
+        '#button_type' => 'primary',
+        '#value' => $this->t('Save'),
+      ],
     );
 
     return $form;
@@ -137,8 +137,16 @@ class EntityLayoutEditForm extends EntityLayoutFormBase {
     // Only save the blocks that are actually allowed and not every key value
     // pair from the form.
     $allowed_blocks = array_filter($form_state->getValue('allowed_blocks', []));
-
     $this->entity->setAllowedBlocks($allowed_blocks);
+
+    // Update the block configuration.
+    $layout = $form_state->getValue('layout', []);
+
+    if (is_array($layout)) {
+      foreach ($layout as $block_id => $block_configuration) {
+        $this->entity->updateBlock($block_id, $block_configuration);
+      }
+    }
 
     $this->save($form, $form_state);
 
@@ -152,10 +160,14 @@ class EntityLayoutEditForm extends EntityLayoutFormBase {
    *   The block to render a row for.
    * @param $weight_delta
    *   The calculated weight delta.
+   * @param string $target_entity_type
+   * @param string $bundle_entity_type
+   * @param string $target_bundle
    *
    * @return array
    */
-  protected function buildBlockRow(BlockPluginInterface $block, $weight_delta) {
+  protected function buildBlockRow(BlockPluginInterface $block, $weight_delta, $target_entity_type, $bundle_entity_type, $target_bundle) {
+    $configuration = $block->getConfiguration();
 
     $block_row = [
       '#attributes' => [
@@ -173,7 +185,7 @@ class EntityLayoutEditForm extends EntityLayoutFormBase {
 
     $block_row['weight'] = [
       '#type' => 'weight',
-      '#default_value' => 0,
+      '#default_value' => isset($configuration['weight']) ? $configuration['weight'] : 0,
       '#delta' => $weight_delta,
       '#title' => $this->t('Weight for @block block', ['@block' => $block->label()]),
       '#title_display' => 'invisible',
@@ -186,7 +198,18 @@ class EntityLayoutEditForm extends EntityLayoutFormBase {
       '#type' => 'operations',
       '#links' => [
         'edit' => [
-          'title' => $this->t('Edit')
+          'title' => $this->t('Edit'),
+          'url' => Url::fromRoute("entity_layout.{$target_entity_type}.block.edit", [
+            'block_id' => $configuration['uuid'],
+            $bundle_entity_type => $target_bundle,
+          ]),
+          'attributes' => [
+            'class' => ['use-ajax'],
+            'data-dialog-type' => 'modal',
+            'data-dialog-options' => Json::encode([
+              'width' => 700,
+            ]),
+          ],
         ],
       ],
     ];

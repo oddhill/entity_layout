@@ -1,3 +1,6 @@
-administer contexts:
+administer entity layouts:
   title: 'Administer entity layouts'
-  description: 'Create and configure entity layouts.'
+  description: 'Create, remove and configure default entity layout configuration.'
+create entity layouts:
+  title: 'Create entity layouts'
+  description: 'This permission will allow a user to create custom entity layouts for content entities when a default entity layout has been configured.'
