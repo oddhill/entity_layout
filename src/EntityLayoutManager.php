@@ -29,7 +29,7 @@ class EntityLayoutManager {
   /**
    * Get all entity layouts.
    *
-   * @return EntityLayoutInterface|[]
+   * @return EntityLayoutInterface[]
    */
   public function getAll() {
     return $this->getEntityLayoutStorage()->loadMultiple();

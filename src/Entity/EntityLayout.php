@@ -16,7 +16,10 @@ use Drupal\entity_layout\EntityLayoutInterface;
  *   handlers = {
  *     "access" = "Drupal\entity_layout\EntityLayoutAccess",
  *     "view_builder" = "Drupal\entity_layout\EntityLayoutViewBuilder",
+ *     "list_builder" = "Drupal\entity_layout\EntityLayoutListBuilder",
  *     "form" = {
+ *       "add" = "Drupal\entity_layout\Form\EntityLayoutAddForm",
+ *       "delete" = "Drupal\entity_layout\Form\EntityLayoutDeleteForm",
  *       "config-edit" = "Drupal\entity_layout\Form\EntityLayoutConfigEditForm",
  *       "content-edit" = "Drupal\entity_layout\Form\EntityLayoutContentEditForm",
  *     }
@@ -35,6 +38,11 @@ use Drupal\entity_layout\EntityLayoutInterface;
  *     "allowed_blocks",
  *     "default_blocks",
  *     "settings",
+ *   },
+ *   links = {
+ *     "collection" = "/admin/structure/entity_layout",
+ *     "add-form" = "/admin/structure/entity_layout/add",
+ *     "delete-form" = "/admin/structure/entity_layout/{entity_layout}/delete"
  *   }
  * )
  */
@@ -95,7 +103,7 @@ class EntityLayout extends ConfigEntityBase implements EntityLayoutInterface {
    * Contains a temporary collection of blocks after they have been retrieved
    * with the getBlocks method.
    *
-   * @var BlockCollection
+   * @var BlockPluginCollection
    */
   protected $blocks_collection;
 
@@ -104,6 +112,29 @@ class EntityLayout extends ConfigEntityBase implements EntityLayoutInterface {
    */
   public function id() {
     return $this->target_entity_type . '.' . $this->target_bundle;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function label() {
+    if ($this->label) {
+      return $this->label;
+    }
+
+    $entity_type = $this->entityTypeManager()->getDefinition($this->getTargetEntityType());
+
+    $label = $entity_type->getLabel();
+
+    if ($this->getTargetBundle() && $this->getTargetBundle() !== $this->getTargetEntityType()) {
+      $bundle_entity = $this->entityTypeManager()
+        ->getStorage($entity_type->getBundleEntityType())
+        ->load($this->getTargetBundle());
+
+      $label = $label . " ({$bundle_entity->label()})";
+    }
+
+    return $label;
   }
 
   /**

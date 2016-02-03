@@ -1,0 +1,23 @@
+entity.entity_layout.collection:
+  path: '/admin/structure/entity_layout'
+  defaults:
+    _entity_list: 'entity_layout'
+    _title: 'Entity layout'
+  requirements:
+    _permission: 'administer entity layouts'
+
+entity_layout.add_form:
+  path: '/admin/structure/entity_layout/add'
+  defaults:
+    _entity_form: entity_layout.add
+    _title: 'Add Entity Layout'
+  requirements:
+    _permission: 'administer entity layouts'
+
+entity.entity_layout.delete_form:
+  path: '/admin/structure/entity_layout/{entity_layout}/delete'
+  defaults:
+    _entity_form: 'entity_layout.delete'
+    _title: 'Delete'
+  requirements:
+    _entity_access: 'entity_layout.delete'

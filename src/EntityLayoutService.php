@@ -62,6 +62,60 @@ class EntityLayoutService {
   }
 
   /**
+   * Get a list of supported entity types suitable for a select list.
+   *
+   * @return array
+   */
+  public function getSupportedEntityTypesList() {
+    $definitions = $this->entityTypeManager->getDefinitions();
+
+    $supported = [];
+
+    foreach ($definitions as $definition) {
+      // Only support fieldable entity types.
+      if (!$definition->get('field_ui_base_route')) {
+        continue;
+      }
+
+      $supported[$definition->id()] = $definition->getLabel();
+    }
+
+    return $supported;
+  }
+
+  /**
+   * Get a list of entity bundles by entity type id. Returns false if there
+   * are no bundles.
+   *
+   * @param $entity_type_id
+   *
+   * @return array
+   */
+  public function getEntityTypeBundlesList($entity_type_id) {
+    $entity_type = $this->entityTypeManager
+      ->getDefinition($entity_type_id);
+
+    $bundle_entity_type = $entity_type
+      ->getBundleEntityType();
+
+    $bundles = [];
+
+    if (is_null($bundle_entity_type)) {
+      return $bundles;
+    }
+
+    $entity_bundles = $this->entityTypeManager
+      ->getStorage($bundle_entity_type)
+      ->loadMultiple();
+
+    foreach ($entity_bundles as $entity_bundle_id => $entity_bundle) {
+      $bundles[$entity_bundle_id] = $entity_bundle->label();
+    }
+
+    return $bundles;
+  }
+
+  /**
    * Get the label for the target entity.
    *
    * @param EntityLayoutInterface $entity_layout

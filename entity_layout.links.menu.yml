@@ -1,0 +1,5 @@
+entity.entity_layout.collection:
+  title: 'Entity layout'
+  parent: system.admin_structure
+  description: 'Create and manage entity layouts.'
+  route_name: entity.entity_layout.collection
