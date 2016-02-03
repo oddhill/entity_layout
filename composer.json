@@ -1,0 +1,20 @@
+{
+  "name": "drupal/entity_layout",
+  "description": "This module allows the layout to be configured for entity content individually by the user.",
+  "type": "drupal-module",
+  "license": "MIT",
+  "homepage": "https://github.com/oddhill/entity_layout",
+  "authors": [
+    {
+      "name": "Christoffer Palm",
+      "email": "christoffer.palm@oddhill.se",
+      "homepage": "http://www.oddhill.se/",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/oddhill/entity_layout/issues",
+    "source": "https://github.com/oddhill/entity_layout",
+    "docs": "https://github.com/oddhill/entity_layout"
+  }
+}
