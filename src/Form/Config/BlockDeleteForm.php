@@ -2,44 +2,50 @@
 
 namespace Drupal\entity_layout\Form\Config;
 
-use Drupal\Core\Block\BlockPluginInterface;
-use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\entity_layout\EntityLayoutInterface;
 use Drupal\entity_layout\EntityLayoutManager;
+use Drupal\entity_layout\EntityLayoutService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class BlockDeleteForm extends ConfirmFormBase {
 
   /**
-   * The entity layout.
+   * The entity layout if it has been loaded once.
    *
    * @var EntityLayoutInterface
    */
-  private $entityLayout;
+  protected $entityLayout;
 
   /**
-   * The content entity.
+   * The entity layout manager.
    *
-   * @var ContentEntityInterface
-   */
-  private $contentEntity;
-
-  /**
    * @var EntityLayoutManager
    */
   protected $entityLayoutManager;
+
+  /**
+   * The entity layout service.
+   *
+   * @var EntityLayoutService
+   */
+  protected $entityLayoutService;
 
   /**
    * Constructs a new BlockDeleteForm.
    *
    * @param EntityLayoutManager $entityLayoutManager
    *   The entity layout manager.
+   * @param EntityLayoutService $entityLayoutService
    */
-  public function __construct(EntityLayoutManager $entityLayoutManager) {
+  public function __construct(
+    EntityLayoutManager $entityLayoutManager,
+    EntityLayoutService $entityLayoutService
+  ) {
     $this->entityLayoutManager = $entityLayoutManager;
+    $this->entityLayoutService = $entityLayoutService;
   }
 
   /**
@@ -47,7 +53,8 @@ class BlockDeleteForm extends ConfirmFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_layout.manager')
+      $container->get('entity_layout.manager'),
+      $container->get('entity_layout.service')
     );
   }
 
@@ -62,8 +69,13 @@ class BlockDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getQuestion() {
+    $parameters = $this->getRouteMatch()->getParameters()->all();
+
+    $entity_layout = $this->getEntityLayoutFromRouteMatch();
+    $block = $entity_layout->getBlock($parameters['block_id']);
+
     return $this->t('Are you sure you want to remove the @label block.', [
-      '@label' => 'label',
+      '@label' => $block->label(),
     ]);
   }
 
@@ -71,31 +83,52 @@ class BlockDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    $content_entity = $this->getContentEntityFromRouteMath();
-    //$entity_type_id = $content_entity->getEntityTypeId();
+    $entity_layout = $this->getEntityLayoutFromRouteMatch();
 
-    var_dump($content_entity);
+    $target_entity_type = $entity_layout
+      ->getTargetEntityType();
 
-    return Url::fromRoute("entity_layout.{$entity_type_id}.content.layout", [
-      $entity_type_id => $content_entity->id(),
+    $bundle_entity_type = $this->entityLayoutService
+      ->getTargetBundleEntityType($entity_layout);
+
+    return Url::fromRoute("entity_layout.{$target_entity_type}.layout", [
+      $bundle_entity_type => $this->entityLayout->getTargetBundle(),
     ]);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    // TODO: Implement submitForm() method.
+  public function buildForm(array $form, FormStateInterface $form_state) {
+    $form = parent::buildForm($form, $form_state);
+
+    // Remove the cancel button if this is an AJAX request since Drupals built
+    // in modal dialogues does not handle buttons that are not a primary
+    // button very well.
+    if ($this->getRequest()->isXmlHttpRequest()) {
+      unset($form['actions']['cancel']);
+    }
+
+    return $form;
   }
 
   /**
-   * Get a block instance from the route match parameters.
-   *
-   * @return BlockPluginInterface
+   * {@inheritdoc}
    */
-  protected function getBlockFromRouteMatch() {
-    var_dump($this->getRouteMatch()->getParameter());
-    die;
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $parameters = $this->getRouteMatch()->getParameters()->all();
+    $entity_layout = $this->getEntityLayoutFromRouteMatch();
+
+    $block = $entity_layout->getBlock($parameters['block_id']);
+    $entity_layout->removeBlock($parameters['block_id']);
+
+    drupal_set_message($this->t('The @label block has been removed.', [
+      '@label' => $block->label(),
+    ]));
+
+    $entity_layout->save();
+
+    $form_state->setRedirectUrl($this->getCancelUrl());
   }
 
   /**
@@ -110,23 +143,5 @@ class BlockDeleteForm extends ConfirmFormBase {
     }
 
     return $this->entityLayout;
-  }
-
-  /**
-   * Attempt to get a content entity from the route match.
-   *
-   * @return ContentEntityInterface|null
-   */
-  protected function getContentEntityFromRouteMath() {
-    if (!$this->contentEntity) {
-      $parameters = $this->getRouteMatch()->getParameters();
-      $entity_type_id = $parameters->get('entity_type_id');
-
-      if ($entity_type_id && $parameters->has($entity_type_id)) {
-        $this->contentEntity = $parameters->get($entity_type_id);
-      }
-    }
-
-    return $this->contentEntity;
   }
 }

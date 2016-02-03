@@ -29,7 +29,7 @@ class BlockAddForm extends BlockFormBase {
     $bundle_entity_type = $this->entityLayoutService
       ->getTargetBundleEntityType($this->entityLayout);
 
-    return Url::fromRoute("entity_layout.{$target_entity_type}.config.layout", [
+    return Url::fromRoute("entity_layout.{$target_entity_type}.layout", [
       $bundle_entity_type => $this->entityLayout->getTargetBundle(),
     ]);
   }
