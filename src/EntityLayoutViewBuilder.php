@@ -94,14 +94,9 @@ class EntityLayoutViewBuilder implements EntityViewBuilderInterface {
       $blocks = $entity->getDefaultBlocks();
     }
 
-    //var_dump(\Drupal::service('context.repository')->getAvailableContexts());
-
     /** @var BlockPluginInterface $block */
     foreach ($blocks as $block_id => $block) {
       $configuration = $block->getConfiguration();
-
-      //var_dump($block->getPluginId());
-      //var_dump($block->getContextMapping());
 
       // Inject runtime contexts.
       if ($block instanceof ContextAwarePluginInterface) {
@@ -146,8 +141,6 @@ class EntityLayoutViewBuilder implements EntityViewBuilderInterface {
     }
 
     $cacheability->applyTo($build);
-
-    //die;
 
     return $build;
   }
