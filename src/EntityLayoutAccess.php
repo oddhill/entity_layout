@@ -2,6 +2,7 @@
 
 namespace Drupal\entity_layout;
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\EntityAccessControlHandler;
 use Drupal\Core\Entity\EntityHandlerInterface;
 use Drupal\Core\Entity\EntityInterface;
@@ -22,6 +23,10 @@ class EntityLayoutAccess extends EntityAccessControlHandler implements EntityHan
    * {@inheritdoc}
    */
   protected function checkAccess(EntityInterface $entity, $operation, AccountInterface $account) {
+    if ($operation === 'view') {
+      return AccessResult::allowedIfHasPermission($account, 'access content');
+    }
+
     return parent::checkAccess($entity, $operation, $account);
   }
 }
