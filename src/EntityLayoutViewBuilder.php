@@ -15,6 +15,7 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Session\AccountInterface;
 
 class EntityLayoutViewBuilder implements EntityViewBuilderInterface {
 
@@ -29,11 +30,18 @@ class EntityLayoutViewBuilder implements EntityViewBuilderInterface {
   protected $entityLayoutService;
 
   /**
-   * @var
+   * @var EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
   /**
+   * @var AccountInterface
+   */
+  protected $account;
+
+  /**
+   * Get the current route match.
+   *
    * @return RouteMatchInterface
    */
   protected function getRouteMatch() {
@@ -45,6 +53,8 @@ class EntityLayoutViewBuilder implements EntityViewBuilderInterface {
   }
 
   /**
+   * Get the entity layout service.
+   *
    * @return EntityLayoutService
    */
   protected function getEntityLayoutService() {
@@ -56,6 +66,8 @@ class EntityLayoutViewBuilder implements EntityViewBuilderInterface {
   }
 
   /**
+   * Get the Drupal entity type manager.
+   *
    * @return EntityTypeManagerInterface
    */
   protected function getEntityTypeManager() {
@@ -64,6 +76,19 @@ class EntityLayoutViewBuilder implements EntityViewBuilderInterface {
     }
 
     return $this->entityTypeManager;
+  }
+
+  /**
+   * Get the current user.
+   *
+   * @return AccountInterface
+   */
+  protected function getCurrentUser() {
+    if (!$this->account) {
+      $this->account = \Drupal::service('current_user');
+    }
+
+    return $this->account;
   }
 
   /**
@@ -82,11 +107,19 @@ class EntityLayoutViewBuilder implements EntityViewBuilderInterface {
   public function view(EntityInterface $entity, $view_mode = 'full', $langcode = NULL) {
     /** @var EntityLayoutInterface $entity */
 
+    $content_entity = $this->getContentEntity();
+
     $build = [];
 
     $cacheability = CacheableMetadata::createFromRenderArray($build);
-    $content_entity = $this->getContentEntity();
 
+    // Ad the entity layout to the cache array to allow cache invalidation
+    // when it's modified.
+    $cacheability->addCacheableDependency($entity);
+
+    // If content blocks has been created for this entity layout then use
+    // those to render the page. If not then fall back to the default
+    // configuration for this layout.
     if ($this->getEntityLayoutService()->hasContentBlocks($entity, $content_entity)) {
       $blocks = $this->getEntityLayoutService()->getContentBlockCollection($content_entity);
     }
@@ -102,6 +135,16 @@ class EntityLayoutViewBuilder implements EntityViewBuilderInterface {
       if ($block instanceof ContextAwarePluginInterface) {
         $contexts = \Drupal::service('context.repository')->getRuntimeContexts($block->getContextMapping());
         \Drupal::service('context.handler')->applyContextMapping($block, $contexts);
+      }
+
+      // Make sure the user is allowed to view the block.
+      $access = $block->access($this->getCurrentUser(), TRUE);
+
+      $cacheability->addCacheableDependency($access);
+
+      // If the user is not allowed then do not render the block.
+      if (!$access->isAllowed()) {
+        continue;
       }
 
       // Create the render array for the block as a whole.
